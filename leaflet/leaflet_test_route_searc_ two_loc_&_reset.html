@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>search two loc and reset</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<link rel="stylesheet" type="text/css" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"><!-- Leaflet Control Geocoder: -->
+
+<style>
+
+	 body{
+	 	margin: 0;
+	 	padding: 0;
+	 }
+
+
+
+	    .reset-button {
+            background: white;
+            padding: 10px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+
+</style>
+
+
+
+</head>
+<body>
+
+	<div id="map" style="width: 100%;  height: 100vh; "></div>
+
+</body>
+
+  <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script type="text/javascript" src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script><!-- Leaflet Control Geocoder: -->
+
+<script>
+
+	  var map = L.map('map').setView([28.2380, 83.9956], 11);
+        var mapLink = "<a href='http://openstreetmap.org'>OpenStreetMap</a>";
+        L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            attribution: 'Leaflet &copy; ' + mapLink + ', contribution',
+            maxZoom: 18
+        }).addTo(map);
+
+        var markers =[];               // Array to store selected markers
+        var routingControl = null ;    // Variable to store the routing control
+        var mapLocked = false ;        // Boolean to prevent additional selections after two points are selected
+
+	// Function to reset the map
+
+        function resetMap(){
+          markers.forEach(marker =>map.removeLayer(marker));// Remove all markers
+          markers = [];  // Clear the marker array
+          if(routingControl){
+          	map.removeControl(routingControl); // Remove the routing control
+          	routingControl = null ;
+          }
+          mapLocked = false; // Unlock the map for new selections
+        }
+
+             // Add the geocoder search bar
+
+        var   geocoder = L.Control.geocoder({
+        	defaultMarkGeocode : false ,
+        }).on('markgeocode',function(e){
+        	if(mapLocked){
+        		alert("Click the Reset button to select new points.");
+        		return;
+        	}
+        	var latlng = e.geocode.center ; // Get the selected location's coordinates
+        	var newMarker = L.marker(latlng).addTo(map); // Add marker to the map
+             markers.push(newMarker);
+
+             if(markers.length ===2){
+             	routingControl= L.Routing.control({
+             	waypoints: markers.map(marker => marker.getLatLng()),// Use the marker locations
+             	}).addTo(map);
+             	mapLocked = true ; // Lock the map after route is drawn
+             }
+        }).addTo(map);
+
+           // Add a reset button
+
+        var resetButton = L.control({ position: 'topright'});
+        resetButton.onAdd = function(){
+        	  var button = L.DomUtil.create('button', 'reset-button');
+            button.innerHTML = 'Reset';
+            button.onclick = resetMap;
+            L.DomEvent.disableClickPropagation(button); // Prevent click propagation
+            L.DomEvent.on(button, 'click', L.DomEvent.stopPropagation); // Stop event on click
+            return button;
+        };
+        resetButton.addTo(map);
+
+
+</script>
+</html>

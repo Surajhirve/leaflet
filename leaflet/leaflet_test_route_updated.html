@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Geolocation</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .reset-button {
+            background: white;
+            padding: 10px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map" style="width:100%; height: 100vh"></div>
+    <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+    <script>
+        var map = L.map('map').setView([18.4678131,73.8729396], 14);
+        var mapLink = "<a href='http://openstreetmap.org'>OpenStreetMap</a>";
+        L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            attribution: 'Leaflet &copy; ' + mapLink + ', contribution',
+            maxZoom: 18
+        }).addTo(map);
+
+        var markers = []; // Array to store selected markers
+        var routingControl = null; // Variable to store the routing control
+        var mapLocked = false; // Boolean to prevent additional clicks after two points are selected
+
+        // Function to reset the map
+        function resetMap() {
+            markers.forEach(marker => map.removeLayer(marker)); // Remove all markers
+            markers = []; // Clear the marker array
+            if (routingControl) {
+                map.removeControl(routingControl); // Remove the routing control
+                routingControl = null;
+            }
+            mapLocked = false; // Unlock the map for new selections
+        }
+
+        map.on('click', function (e) {
+            if (mapLocked) {
+                alert("Click the Reset button to select new points.");
+                return;
+            }
+
+            if (markers.length < 2) { // Allow only two points
+                var newMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+                markers.push(newMarker);
+
+                if (markers.length === 2) { // When two points are selected
+                    routingControl = L.Routing.control({
+                        waypoints: markers.map(marker => marker.getLatLng()), // Use the marker locations
+                    }).addTo(map);
+                    mapLocked = true; // Lock the map after route is drawn
+                }
+            }
+        });
+
+        // Add a reset button
+        var resetButton = L.control({ position: 'topright' });
+        resetButton.onAdd = function () {
+            var button = L.DomUtil.create('button', 'reset-button');
+            button.innerHTML = 'Reset';
+            button.onclick = resetMap;
+            return button;
+        };
+        resetButton.addTo(map);
+    </script>
+</body>
+
+</html>
+

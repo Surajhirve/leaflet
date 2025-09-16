@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" />
+ <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  
+</head>
+<style>
+	body{
+		margin: 0;
+		padding: 0;
+	}
+	#map{
+		width: 50%;
+		height: 50vh;
+		background: red;
+		/*overflow: hidden;*/
+	}
+	
+</style>
+
+
+
+<body>
+
+    <div id="map"></div>
+</body>
+
+<script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script type="text/javascript" src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script><!-- Leaflet Control Geocoder: -->
+
+    <script>
+        let map, marker, routeControl;
+        let currentLocation = null;
+
+        // Taxi icon
+        const taxiIcon = L.icon({
+            iconUrl: 'img/taxi.png', // Ensure this exists on your server
+            iconSize: [50, 50],
+            iconAnchor: [25, 25]
+        });
+
+        // Get current location
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                currentLocation = L.latLng(lat, lng);
+
+                // Initialize map at user's location
+                map = L.map('map').setView(currentLocation, 13);
+
+                // Add OpenStreetMap tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+                    maxZoom: 19
+                }).addTo(map);
+
+                // Add Geocoder
+                L.Control.geocoder().addTo(map);
+
+                // Add taxi marker at current location
+                marker = L.marker(currentLocation, { icon: taxiIcon }).addTo(map);
+
+                // Handle click to route
+                map.on('click', function (e) {
+                    const destination = e.latlng;
+
+                    // Add destination marker
+                    L.marker(destination).addTo(map);
+
+                    // Remove old route if exists
+                    if (routeControl) {
+                        map.removeControl(routeControl);
+                    }
+
+                    // Add new route
+                    routeControl = L.Routing.control({
+                        waypoints: [
+                            L.latLng(marker.getLatLng()),
+                            destination
+                        ],
+                        createMarker: () => null
+                    }).on('routesfound', function (e) {
+                        const coords = e.routes[0].coordinates;
+
+                        // Animate taxi
+                        coords.forEach((coord, index) => {
+                            setTimeout(() => {
+                                marker.setLatLng([coord.lat, coord.lng]);
+                            }, 50 * index);
+                        });
+                    }).addTo(map);
+                });
+
+            },
+            (error) => {
+                alert("Geolocation failed: " + error.message);
+            },
+            {
+                enableHighAccuracy: true
+            }
+        );
+    </script>
+
+</html>

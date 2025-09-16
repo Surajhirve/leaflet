@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+<style>
+	body{
+		margin: 0;
+		padding: 0;
+	   }
+
+	 .reset-button {
+            background: white;
+            padding: 10px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+</style>
+</head>
+<body>
+      
+    <div id="map" style="width:100%; height: 100vh"></div>
+    <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+
+</body>
+<script>
+	var map = L.map('map').setView([28.2380, 83.9956], 11);
+	var mapLink = "<a href='http://openstreetmap.org'>OpenStreetMap</a>";
+        L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            attribution: 'Leaflet &copy; ' + mapLink + ', contribution',
+            maxZoom: 18
+        }).addTo(map);
+
+        var markers = [];
+        var routingControl = null;
+        var mapLocked = false ;
+
+        function resetMap(){
+        	markers.forEach(marker=> map.removeLayer(marker));
+        	markers =[];
+        	if(routingControl){
+        		map.removeControl(routingControl);
+        		routingControl = null ;
+        	}
+        	mapLocked = false;
+        }
+
+        map.on('click', function (e){
+        	if(mapLocked){
+        		alert("Click the Reset button to select new points.");
+        		return;
+        	}
+        	if(markers.length < 2){
+        		var newMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+        		markers.push(newMarker);
+
+        	if(markers.length === 2){
+        	   routingControl = L.Routing.control({
+        	   	waypoints : markers.map(marker => marker.getLatLng()),
+        	   }).addTo(map);
+        	   mapLocked = true ;
+        	}
+           }
+        });
+
+        var resetButton = L.control({position: 'topright'});
+           resetButton.onAdd = function (){
+           	var button = L.DomUtil.create('button', 'reset-button');
+           	button.innerHTML = "Reset";
+           	button.onclicke = resetMap ;
+           	return button ;
+          };
+          resetButton.addTo(map);
+
+</script>
+</html>
